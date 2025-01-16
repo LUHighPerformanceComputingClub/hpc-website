@@ -1,4 +1,4 @@
 # hpc-website
 Public website for the HPCC
 
-link: 
+link: https://luhighperformancecomputingclub.github.io/hpc-website/

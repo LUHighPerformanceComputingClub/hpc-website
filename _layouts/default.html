@@ -1,12 +1,46 @@
 <!DOCTYPE html>
 <html lang="{{ site.lang | default: "en-US" }}">
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta charset="utf-8">
-    <title>{{ page.title }} - {{ site.title }}</title>
-    <link rel="stylesheet" href="{{ "/assets/css/main.css" | relative_url }}">
-  </head>
-  <body>
-    {{ content }}
-  </body>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta charset="utf-8">
+        <title>{{ page.title }}</title>
+        <link rel="stylesheet" href='{{ "/assets/css/main.css" | prepend: site.url }}'>
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+                <div id="title">
+                    <img src='{{ "/_includes/HPCC-Logo-All.png" | prepend: site.url }}'/>
+                    <h1>{{ site.title }}</h1>
+                </div>
+                
+				<div id="nav">
+					<a href="{{ site.url }}">Home</a>
+					<a href="{{ site.url | append: '/about.html'}}">About</a>
+					<a href="{{ site.url | append: '/folder/content.html'}}">CONTENT!!!</a>
+				</div>
+            </div>
+        
+            <div id="body">
+                <div id="sidebar">
+                    {% for tag in site.tags %}
+                        <h3>{{ tag[0] }}</h3>
+                        <ul>
+                            {% for post in tag[1] %}
+                            <li><a href="{{ post.url | prepend: site.url }}">{{ post.title }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    {% endfor %}
+                </div>
+            
+                <div id="content">
+                    {{ content }}
+                </div>
+            </div>
+        
+            <div id="footer">
+                <p>Page created by Noah Harris</p>
+            </div>
+        </div>
+    </body>
 </html>
