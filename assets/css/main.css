@@ -11,8 +11,18 @@ ol, ul {
     list-style: none;
 }
 
+h1 { /* Bold Headings */
+    font-family: 'Merriweather', serif;
+    font-weight: 700;
+    font-style: normal;
+}
+
 body {
-    background-color: #0A254E;
+    background-color: #55565A;
+
+    font-family: 'Merriweather', serif;
+    font-weight: 400;
+    font-style: normal;
 }
 
 #wrapper {
@@ -32,7 +42,7 @@ body {
 }
 
 #header {
-    background-color: #B72025;
+    background-color: #00083B;
     color: white;
     font-size: 1.2em;
     height: 10%;
@@ -63,7 +73,7 @@ body {
 }
 
 #body {
-    background-color: whitesmoke;
+    background-color: #55565A;
     padding: 1%;
 
     display: flex;
@@ -81,7 +91,7 @@ body {
 }
 
 #footer {
-    background-color: #0A254E;
+    background-color: #00083B;
     color: white;
     height: 10%;
     padding: 10px;
