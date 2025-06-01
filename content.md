@@ -9,6 +9,7 @@ tags: [testing]
 # OpenMP
 
 To run these examples in VSCode:
+
 - ensure Visual Studio is installed
 - open Developer Console
 - navigate to the directory with the .cpp files
