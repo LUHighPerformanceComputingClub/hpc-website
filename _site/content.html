@@ -3,7 +3,7 @@
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta charset="utf-8">
-        <title>Introduction to OpenMP</title>
+        <title>Introduction to Pi Clusters</title>
 
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Merriweather"/>
         <link rel="stylesheet" href='https://luhighperformancecomputingclub.github.io/hpc-website//assets/css/main.css'>
@@ -36,120 +36,118 @@
                 </div>
             
                 <div id="content">
-                    <h1 id="openmp">OpenMP</h1>
+                    <p>This guide will go over how to cluster multiple raspberry pi’s together, and how to run python scripts off the pi cluster</p>
 
-<p>To run these examples in VSCode:</p>
+<p>## Prerequisites</p>
 <ul>
-  <li>ensure Visual Studio is installed</li>
-  <li>open Developer Console</li>
-  <li>navigate to the directory with the .cpp files</li>
-  <li><code class="language-plaintext highlighter-rouge">code .</code></li>
+  <li>More than one raspberry pi</li>
+  <li>Each raspberry pi must be plugged into an ethernet switch</li>
+  <li>Power/ethernet cables for each pi</li>
+  <li>Internet access to download updates and module</li>
+  <li>A micro SD card with Raspbian for each pi
+    <h2 id="raspbian-installation">Raspbian Installation</h2>
+    <ol>
+      <li>Plug each micro SD card into your pc, then <a href="https://www.raspberrypi.com/software/"> Download Raspian</a></li>
+      <li>Plug in the micro SD card, ethernet, and power to each pi</li>
+      <li>Power on each of the Raspberry Pis</li>
+      <li>Enable ssh on each of the pis</li>
+    </ol>
+  </li>
 </ul>
 
-<h2 id="pure-openmp-summing">Pure OpenMP Summing</h2>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#include &lt;omp.h&gt;
-#include &lt;iostream&gt;
-#include &lt;vector&gt;
+<h2 id="getting-started">Getting Started</h2>
+<p>Before we get started, we will need to connect the pis to the internet. Using the wireless connectivity options of the pis or an ethernet hub, connect the pis to the internet at this time. This can be done by simply plugging in the ethernet, or selecting an available Wi-Fi network. Note that Pis like to be finiky when there is no display output for the pi when it is turned on, so it is reccomended that each pi temporarily gets plugged in to a display when it gets powered on.</p>
 
-#define N 1000000
-#define NUM_THREADS 4
+<p>Ok now you have all of the pis on and connected to the internet, what now? Now you need to update your systems using these basic commands. Run this on <strong>EACH</strong> of the pis in the cluster:</p>
+<pre>
+<code>sudo apt update</code>
+<code>sudo apt upgrade</code>
+</pre>
+<p>Next, you will want to intall MPICH, which allows the Pis to split tasks among multiple pis. Run this on <strong>EACH</strong> of the pis</p>
+<pre>
+<code>sudo apt install mpich python3-mpi4py</code>
+</pre>
+<p>Finally install another python library for mpi. Run this on <strong>EACH</strong> of the pis.</p>
+<pre><code>sudo apt install python3-pip python-dev-is-python3 libopenmpi-dev</code></pre>
+<blockquote>
+  <p>Installs python and other resources needed to run tasks in parrellel</p>
+</blockquote>
 
-int main() {
-    std::vector&lt;int&gt; arr(N);
-    long long sum = 0;
+<h2 id="setting-ip-addresses">Setting IP addresses</h2>
+<p>Now that everything is installed, lets get working on setting IP addresses manually.</p>
 
-    for (int i = 0; i &lt; N; i++)
-        arr[i] = i + 1;
+<p>Using the command <code>nmtui</code>, click edit a connection, then select the wired ethernet connection.</p>
 
-    omp_set_num_threads(NUM_THREADS);
+<p>Next, go down to the IPv4 Configuration section, and change the IP to a manual address by selecting automatic, then manual.</p>
 
-    #pragma omp parallel for reduction(+:sum)
-    for (int i = 0; i &lt; N; i++)
-        sum += arr[i];
+<p>Finally, in the IPv4 Configuration section down to where it says addresses, and type in the desired address. Go to the bottom and select ok.</p>
 
-    std::cout &lt;&lt; "Sum: " &lt;&lt; sum &lt;&lt; std::endl;
-    return 0;
-}
-</code></pre></div></div>
+<p><strong>After exiting nmtui, run the commands <code> sudo ifconfig eth0 down</code>, then <code>sudo ifconfig eth0 up</code></strong></p>
 
-<h2 id="openmp-factorial">OpenMP Factorial</h2>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#include &lt;omp.h&gt;
-#include &lt;iostream&gt;
-#include &lt;vector&gt;
+<h2 id="getting-ip-addresses-and-usernames">Getting IP addresses and usernames</h2>
+<p>For each pi, an IP address will need to be configured using the above method. Because of network segments, the IP addresses will need to be on the same network segments in order for this guide to work (If you dont know what that means look at the example file below).
+You can use the <code>ifconfig</code> command to get the IP address of the device.</p>
 
-#define N 10
+<p>Here is an example of what it should look like, the IP address is on line 2 after the “inet” keyword:
+<img />https://raspberrytips.com/wp-content/uploads/2018/08/ifconfig.png&lt;/img&gt;</p>
 
-long long factorial(int n) {
-    if (n == 0 || n == 1) return 1;
-    return n * factorial(n - 1);
-}
+<p>Now, write down/remeber the IP of each of the Pi’s, you will need them for later.
+Save this to a file called <strong>ip_addrs</strong> on the master node.</p>
+<pre>
+<code>touch ip_addrs</code>
+</pre>
+<p>In the file, write down the IP’s on a <strong>separate</strong> line</p>
 
-int main() {
-    std::vector&lt;long long&gt; results(N);
+<p>Additionally, you will want to write down the users for which MPI will be used for. This is <strong>very</strong> important. Use the <code>whoami</code> command to get the username of the user. <strong>DO NOT USE ROOT, MPI WILL NOT WORK AS ROOT</strong>
+<br />This is the syntax for which you will write down the usernames and IP addresses:</p>
+<pre><code>user@IPAddress</code></pre>
+<p>Here is an example of what the file should look like in its final form:</p>
+<pre>
+pi@192.168.1.1
+pi2@192.168.1.2
+mpiGuy@192.168.1.3
+timmy@192.168.1.4
+etc...
+</pre>
+<blockquote>
+  <p>Note, by default, MPI will attempt to use the same user across all nodes by default. Adding the user is optional, but allows for different users to be utilized for MPI.</p>
+</blockquote>
 
-    omp_set_num_threads(4);
+<h2 id="fun-with-ssh">Fun with SSH</h2>
+<p>From your master node you will want to create and copy your SSH key to each node. Follow this process. First, create a ssh key.</p>
+<pre><code>ssh-keygen</code>
+</pre>
+<p>Do this from the master node, and copy the id to each of the pis. User stands for the user that you want to have mpi on. Do this on the master node for <strong>EACH PI</strong></p>
+<pre>
+<code>ssh-copy-id user@PI_IP</code>
+</pre>
+<p>Next, back on the master node, run this command. USER is the user of the master node, and USER2 is the user of the slave node, and IPAddress is the IP address of the slave node:</p>
+<pre><code>scp /home/USER/.ssh/id_rsa.pub USER2@IPAddress:/home/USER2/master.pub</code></pre>
 
-    #pragma omp parallel
-    {
-        #pragma omp single
-        {
-            for (int i = 1; i &lt;= N; i++) {
-                #pragma omp task shared(results) firstprivate(i)
-                {
-                    results[i - 1] = factorial(i);
-                }
-            }
-        }
-    }
+<p>Finally, ssh into the user</p>
+<pre><code>ssh user@<b>NODE_IP</b></code></pre>
+<p>and run these commands:</p>
+<pre>
+<code>cat master.pub &gt;&gt; .ssh/authorized_keys</code>
+<code>rm master.pub</code>
+</pre>
 
-    for (int i = 0; i &lt; N; i++) {
-        std::cout &lt;&lt; "Factorial of " &lt;&lt; (i + 1) &lt;&lt; " is: " &lt;&lt; results[i] &lt;&lt; std::endl;
-    }
+<h2 id="testing-mpi">Testing MPI</h2>
+<p>Alright, to test that MPI is working, lets run a simple command on the master node</p>
+<pre><code> nano Hello.py</code></pre>
+<p>In the file, enter:</p>
+<pre><code>print("Hello World!")</code></pre>
+<p>Ctrl + x, then y, then copy the file to <strong>EACH OF THE SLAVE NODES</strong>:</p>
 
-    return 0;
-}
-</code></pre></div></div>
+<pre><code>scp Hello.py pi@NODE_IP:/home/USER/ &lt;/pre&gt;</code>
+&gt;**^COPY TO EACH PI IP ADDRESS**
 
-<h2 id="openmp--mpi-sum">OpenMP + MPI Sum</h2>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#include &lt;stdio.h&gt;
-#include &lt;mpi.h&gt;
-#include &lt;omp.h&gt;
+Now, all you need to do is enter this command:
+<pre><code>mpirun --hostfile ip_addrs python3 Hello.py</code></pre>
 
-#define N 1000000
-#define NUM_THREADS 4
 
-int main(int argc, char** argv) {
-    int rank, size;
-    MPI_Init(&amp;argc, &amp;argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &amp;size);
-
-    omp_set_num_threads(NUM_THREADS);
-
-    int chunk_size = N / size;
-    int start = rank * chunk_size;
-    int end = start + chunk_size;
-
-    long long local_sum = 0;
-    int arr[N];
-
-    for (int i = start; i &lt; end; i++)
-        arr[i] = i + 1;
-
-    #pragma omp parallel for reduction(+:local_sum)
-    for (int i = start; i &lt; end; i++)
-        local_sum += arr[i];
-
-    long long global_sum = 0;
-    MPI_Reduce(&amp;local_sum, &amp;global_sum, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-
-    if (rank == 0)
-        printf("Total Sum: %lld\n", global_sum);
-
-    MPI_Finalize();
-    return 0;
-}
-</code></pre></div></div>
+ Thats it! Mpi is now working, we will dive further into MPI in a later guide.
+</pre>
 
                 </div>
             </div>
