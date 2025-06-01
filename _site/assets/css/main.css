@@ -18,7 +18,7 @@ h1 { /* Bold Headings */
 }
 
 body {
-    background-color: #0A254E;
+    background-color: #55565A;
 
     font-family: 'Merriweather', serif;
     font-weight: 400;
@@ -42,7 +42,7 @@ body {
 }
 
 #header {
-    background-color: #B72025;
+    background-color: #0A254E;
     color: white;
     font-size: 1.2em;
     height: 10%;
@@ -73,7 +73,7 @@ body {
 }
 
 #body {
-    background-color: whitesmoke;
+    background-color: #A2A5AB;
     padding: 1%;
 
     display: flex;

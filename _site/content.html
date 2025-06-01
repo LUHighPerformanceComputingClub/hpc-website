@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en-US">
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta charset="utf-8">
+        <title>Introduction to OpenMP</title>
+
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Merriweather"/>
+        <link rel="stylesheet" href='https://luhighperformancecomputingclub.github.io/hpc-website//assets/css/main.css'>
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header">
+                <div id="title">
+                    <img src='https://luhighperformancecomputingclub.github.io/hpc-website//_includes/HPCC-Logo-All.png'/>
+                    <h1>LU High Performance Computing Club</h1>
+                </div>
+                
+				<div id="nav">
+					<a href="https://luhighperformancecomputingclub.github.io/hpc-website/">Home</a>
+					<a href="https://luhighperformancecomputingclub.github.io/hpc-website/about.md">About</a>
+					<a href="https://luhighperformancecomputingclub.github.io/hpc-website/content.md">CONTENT!!!</a>
+				</div>
+            </div>
+        
+            <div id="body">
+                <div id="sidebar">
+                    
+                        <h3>testing</h3>
+                        <ul>
+                            
+                            <li><a href="https://luhighperformancecomputingclub.github.io/hpc-website//posts/Introduction-To-Jekyll">Introduction to Jekyll</a></li>
+                            
+                        </ul>
+                    
+                </div>
+            
+                <div id="content">
+                    <h1 id="openmp">OpenMP</h1>
+
+<p>To run these examples in VSCode:</p>
+<ul>
+  <li>ensure Visual Studio is installed</li>
+  <li>open Developer Console</li>
+  <li>navigate to the directory with the .cpp files</li>
+  <li><code class="language-plaintext highlighter-rouge">code .</code></li>
+</ul>
+
+<h2 id="pure-openmp-summing">Pure OpenMP Summing</h2>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#include &lt;omp.h&gt;
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+
+#define N 1000000
+#define NUM_THREADS 4
+
+int main() {
+    std::vector&lt;int&gt; arr(N);
+    long long sum = 0;
+
+    for (int i = 0; i &lt; N; i++)
+        arr[i] = i + 1;
+
+    omp_set_num_threads(NUM_THREADS);
+
+    #pragma omp parallel for reduction(+:sum)
+    for (int i = 0; i &lt; N; i++)
+        sum += arr[i];
+
+    std::cout &lt;&lt; "Sum: " &lt;&lt; sum &lt;&lt; std::endl;
+    return 0;
+}
+</code></pre></div></div>
+
+<h2 id="openmp-factorial">OpenMP Factorial</h2>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#include &lt;omp.h&gt;
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+
+#define N 10
+
+long long factorial(int n) {
+    if (n == 0 || n == 1) return 1;
+    return n * factorial(n - 1);
+}
+
+int main() {
+    std::vector&lt;long long&gt; results(N);
+
+    omp_set_num_threads(4);
+
+    #pragma omp parallel
+    {
+        #pragma omp single
+        {
+            for (int i = 1; i &lt;= N; i++) {
+                #pragma omp task shared(results) firstprivate(i)
+                {
+                    results[i - 1] = factorial(i);
+                }
+            }
+        }
+    }
+
+    for (int i = 0; i &lt; N; i++) {
+        std::cout &lt;&lt; "Factorial of " &lt;&lt; (i + 1) &lt;&lt; " is: " &lt;&lt; results[i] &lt;&lt; std::endl;
+    }
+
+    return 0;
+}
+</code></pre></div></div>
+
+<h2 id="openmp--mpi-sum">OpenMP + MPI Sum</h2>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#include &lt;stdio.h&gt;
+#include &lt;mpi.h&gt;
+#include &lt;omp.h&gt;
+
+#define N 1000000
+#define NUM_THREADS 4
+
+int main(int argc, char** argv) {
+    int rank, size;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;size);
+
+    omp_set_num_threads(NUM_THREADS);
+
+    int chunk_size = N / size;
+    int start = rank * chunk_size;
+    int end = start + chunk_size;
+
+    long long local_sum = 0;
+    int arr[N];
+
+    for (int i = start; i &lt; end; i++)
+        arr[i] = i + 1;
+
+    #pragma omp parallel for reduction(+:local_sum)
+    for (int i = start; i &lt; end; i++)
+        local_sum += arr[i];
+
+    long long global_sum = 0;
+    MPI_Reduce(&amp;local_sum, &amp;global_sum, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+
+    if (rank == 0)
+        printf("Total Sum: %lld\n", global_sum);
+
+    MPI_Finalize();
+    return 0;
+}
+</code></pre></div></div>
+
+                </div>
+            </div>
+        
+            <div id="footer">
+                <p>Page created by Noah Harris</p>
+            </div>
+        </div>
+    </body>
+</html>
